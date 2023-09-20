@@ -8,10 +8,6 @@ object Onboarding : Destinations {
     override val route = "Onboarding"
 }
 
-object Registration : Destinations {
-    override val route = "Registration"
-}
-
 object Login : Destinations {
     override val route = "Login"
 }

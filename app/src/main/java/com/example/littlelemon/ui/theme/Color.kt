@@ -2,10 +2,10 @@ package com.example.littlelemon.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val PrimaryGreen = Color(0xFF495E57)
-val PrimaryYellow = Color(0xFFF4CE14)
-val SecondaryOrange = Color(0xFFEE9972)
-val SecondarySalmon = Color(0xFFFBDABB)
-val HighlightLightGrey = Color(0xFFEDEFEE)
-val HighlightCharcoal = Color(0xFF333333)
+val LittleLemonGreen = Color(0xFF495E57)
+val LittleLemonYellow = Color(0xFFF4CE14)
+val LittleLemonOrange = Color(0xFFEE9972)
+val LittleLemonSalmon = Color(0xFFFBDABB)
+val LittleLemonLightGrey = Color(0xFFEDEFEE)
+val LittleLemonCharcoal = Color(0xFF333333)
 

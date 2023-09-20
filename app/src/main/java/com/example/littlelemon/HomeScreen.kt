@@ -1,21 +1,19 @@
 package com.example.littlelemon
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Divider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.navigation.NavHostController
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
+    val (loggedIn, setLoggedIn) = rememberPreference(booleanPreferencesKey("LoggedIn"), true)
+    setLoggedIn(true)
     Column {
-        Header(loggedIn = false)
-        Divider(
-            modifier = Modifier
-                .padding(start = 30.dp, end = 30.dp),
-            thickness = 1.dp, color = Color.LightGray)
+        Text(
+            text="Patate Poil!!!"
+
+        )
     }
 }

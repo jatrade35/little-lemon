@@ -3,43 +3,60 @@ package com.example.littlelemon
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.littlelemon.ui.theme.HighlightLightGrey
+import com.example.littlelemon.ui.theme.LittleLemonLightGrey
 
 @Composable
-fun Header(loggedIn: Boolean) {
+fun Header() {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(HighlightLightGrey),
+            .background(LittleLemonLightGrey)
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.Top
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "Little Lemon Logo",
+        Box(
             modifier = Modifier
-                .height(95.dp)
                 .fillMaxWidth()
                 .padding(
                     start = 0.dp,
                     top = 20.dp,
-                    end = 0.dp,
+                    end = 10.dp,
                     bottom = 30.dp
                 ),
-        )
+            ){
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Little Lemon Logo",
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                    .height(40.dp)
+                    .width(200.dp)
+                    .align(Alignment.Center)
+            )
+        }
+        Divider(
+            modifier = Modifier
+                .padding(start = 30.dp, end = 30.dp),
+            thickness = 1.dp, color = Color.LightGray)
     }
 }
 
 @Preview
 @Composable
 fun HeaderPreview() {
-    Header(loggedIn = false)
+    Header()
 }

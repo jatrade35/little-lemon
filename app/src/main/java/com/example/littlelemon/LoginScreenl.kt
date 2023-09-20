@@ -1,6 +1,8 @@
 package com.example.littlelemon
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,15 +16,18 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -35,27 +40,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.navigation.NavHostController
-import com.example.littlelemon.ui.theme.HighlightLightGrey
+import com.example.littlelemon.ui.theme.LittleLemonGreen
+import com.example.littlelemon.ui.theme.LittleLemonLightGrey
+import com.example.littlelemon.ui.theme.LittleLemonYellow
 import com.example.littlelemon.ui.theme.karlaFamily
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.text.font.FontWeight.Companion as FontWeight
+
+var authenticationError =  mutableStateOf(false)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginPanel(navController: NavHostController ?) {
+fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) {
+    val coroutineScope = rememberCoroutineScope()
     val (email, setEmail) = remember { mutableStateOf("") }
     val (password, setPassword) = remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    val authenticationData: MutableMap<String, String> = mutableMapOf(
-                Pair("jatrade35@hotmail.com","ksw12ot8"),
-                Pair("lindmar67@gmail.com","PapaDenis1")
-    )
-    var authenticationError by remember { mutableStateOf(false) }
+    authenticationError = remember { mutableStateOf(false) }
+    val (_, setLoggedIn) = rememberPreference(booleanPreferencesKey("LoggedIn"), true)
+    setLoggedIn(false)
 
-// Map (username, password) PreferredSharedMemory
     Column(
         modifier = Modifier
-            .background(HighlightLightGrey)
+            .background(LittleLemonLightGrey)
             .fillMaxHeight()
     ) {
         Text(
@@ -71,7 +82,11 @@ fun LoginPanel(navController: NavHostController ?) {
         TextField(
             modifier = Modifier
                 .padding(start = 20.dp, end = 20.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .border(
+                    border = BorderStroke(1.dp, LittleLemonGreen),
+                    shape = RoundedCornerShape(8.dp)
+                ),
             value = email,
             onValueChange = {
                 setEmail(it)
@@ -86,13 +101,24 @@ fun LoginPanel(navController: NavHostController ?) {
                     text="Email",
                     fontFamily = karlaFamily,
                     fontSize = 20.sp,
-                    color = Color.Gray)
-            }
+                    color = Color.DarkGray)
+            },
+            colors = TextFieldDefaults.textFieldColors(
+            textColor = Color.Gray,
+            disabledTextColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            containerColor = Color.Transparent)
         )
         TextField(
             modifier = Modifier
                 .padding(start = 20.dp, top = 50.dp, end = 20.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .border(
+                    border = BorderStroke(1.dp, LittleLemonGreen),
+                    shape = RoundedCornerShape(8.dp)
+                ),
             value = password,
             onValueChange = {
                 setPassword(it)
@@ -114,14 +140,20 @@ fun LoginPanel(navController: NavHostController ?) {
                 val image = if (passwordVisible)
                     Icons.Filled.Visibility
                 else Icons.Filled.VisibilityOff
-
-                // Please provide localized description for accessibility services
                 val description = if (passwordVisible) "Hide password" else "Show password"
 
                 IconButton(onClick = {passwordVisible = !passwordVisible}){
                     Icon(imageVector  = image, description)
                 }
-            })
+            },
+            colors = TextFieldDefaults.textFieldColors(
+                textColor = Color.Gray,
+                disabledTextColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                containerColor = Color.Transparent)
+        )
         ClickableText(
             style = TextStyle(
                 fontSize = 15.sp,
@@ -142,13 +174,15 @@ fun LoginPanel(navController: NavHostController ?) {
                 .fillMaxWidth()
                 .padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 10.dp),
             shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(
+                contentColor = Color.Black,
+                containerColor = LittleLemonYellow,
+                disabledContentColor = Color.Gray,
+                disabledContainerColor = Color.DarkGray
+            ),
             onClick = {
-                if(authenticationData.containsKey(email) && authenticationData[email] == password){
-                    navController!!.navigate(Home.route)
-                }
-                else
-                {
-                    authenticationError = true
+                coroutineScope.launch {
+                    authenticate(appDatabase!!, email, password, navController!!)
                 }
             }
         ){
@@ -172,7 +206,7 @@ fun LoginPanel(navController: NavHostController ?) {
                     color = Color(0xFF000000)
                 ),
                 onClick = {
-                    navController!!.navigate(Registration.route)
+                    navController!!.navigate(Profile.route)
                 },
                 text = AnnotatedString("Create a Free Account Now."),
                 modifier = Modifier
@@ -182,14 +216,14 @@ fun LoginPanel(navController: NavHostController ?) {
         }
         when {
             // ...
-            authenticationError -> {
+            authenticationError.value -> {
                 AlertDialog(
                     onDismissRequest = {},
                     title = {Text("Authentication Failed!")},
                     text = {Text("Something went wrong with authentication. Please verify your login credentials and try again.")},
                     confirmButton = {
                         Button(onClick={
-                            authenticationError = false
+                            authenticationError.value = false
                         }){
                             Text("OK")
                         }
@@ -200,9 +234,20 @@ fun LoginPanel(navController: NavHostController ?) {
     }
 }
 
+suspend fun authenticate(appDatabase: AppDatabase, email:String, password:String, navController: NavHostController) {
+    if(appDatabase.AccountDao().validateLogin(email, password)){
+        navController.navigate(Home.route)
+    }
+    else {
+        withContext(Dispatchers.Main) {
+            authenticationError.value = true
+        }
+    }
+}
+
 @Preview
 @Composable
 fun LoginPreview() {
-    LoginPanel(navController = null)
+    LoginScreen(navController = null, appDatabase = null)
 }
 

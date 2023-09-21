@@ -2,6 +2,7 @@ package com.example.littlelemon
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,18 +17,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.navigation.NavController
 import com.example.littlelemon.ui.theme.LittleLemonLightGrey
 
 @Composable
-fun Header() {
+fun Header(navController: NavController) {
     Column(
         modifier = Modifier
             .background(LittleLemonLightGrey)
             .fillMaxWidth(),
         verticalArrangement = Arrangement.Top
     ) {
+        val (loggedUser, _) = rememberPreference(stringPreferencesKey("LoggedUser"), "")
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -46,6 +49,11 @@ fun Header() {
                     .height(40.dp)
                     .width(200.dp)
                     .align(Alignment.Center)
+                    .clickable {
+                        if(loggedUser != "") {
+                            navController.navigate(Home.route)
+                        }
+                    }
             )
         }
         Divider(
@@ -55,8 +63,3 @@ fun Header() {
     }
 }
 
-@Preview
-@Composable
-fun HeaderPreview() {
-    Header()
-}

@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,34 +35,39 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.navigation.NavHostController
 import com.example.littlelemon.ui.theme.LittleLemonGreen
 import com.example.littlelemon.ui.theme.LittleLemonLightGrey
 import com.example.littlelemon.ui.theme.LittleLemonYellow
 import com.example.littlelemon.ui.theme.karlaFamily
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.text.font.FontWeight.Companion as FontWeight
-
-var authenticationError =  mutableStateOf(false)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) {
     val coroutineScope = rememberCoroutineScope()
+
+    val (loggedUser, setLoggedUser) = rememberPreference(stringPreferencesKey("LoggedUser"), "")
+    val (_, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.blank_profile)
+    val (_, setLoggedUserFistName) = rememberPreference(stringPreferencesKey("LoggedUserFirstName"), "")
+    val (_, setLoggedUserLastName) = rememberPreference(stringPreferencesKey("LoggedUserLastName"), "")
+
     val (email, setEmail) = remember { mutableStateOf("") }
     val (password, setPassword) = remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    authenticationError = remember { mutableStateOf(false) }
-    val (_, setLoggedIn) = rememberPreference(booleanPreferencesKey("LoggedIn"), true)
-    setLoggedIn(false)
+    val (passwordVisible, setPasswordVisible) = remember { mutableStateOf(false) }
+    val (authenticationError, setAuthenticationError) = remember { mutableStateOf(false) }
 
+    val (init, setInit) = remember { mutableStateOf( true ) }
+    if(init && loggedUser != ""){
+        setInit(false)
+        navController!!.navigate(Home.route)
+    }
     Column(
         modifier = Modifier
             .background(LittleLemonLightGrey)
@@ -142,7 +146,7 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
                 else Icons.Filled.VisibilityOff
                 val description = if (passwordVisible) "Hide password" else "Show password"
 
-                IconButton(onClick = {passwordVisible = !passwordVisible}){
+                IconButton(onClick = {setPasswordVisible(!passwordVisible)}){
                     Icon(imageVector  = image, description)
                 }
             },
@@ -182,7 +186,17 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
             ),
             onClick = {
                 coroutineScope.launch {
-                    authenticate(appDatabase!!, email, password, navController!!)
+                    authenticate(
+                        appDatabase = appDatabase!!,
+                        email = email,
+                        password = password,
+                        navController = navController!!,
+                        setLoggedUser = setLoggedUser,
+                        setLoggedUserPictureId = setLoggedUserPictureId,
+                        setAuthenticationError = setAuthenticationError,
+                        setLoggedUserFirstName = setLoggedUserFistName,
+                        setLoggedUserLastName = setLoggedUserLastName
+                    )
                 }
             }
         ){
@@ -206,6 +220,10 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
                     color = Color(0xFF000000)
                 ),
                 onClick = {
+                    setLoggedUser("")
+                    setLoggedUserFistName("")
+                    setLoggedUserLastName("")
+                    setLoggedUserPictureId(R.drawable.blank_profile)
                     navController!!.navigate(Profile.route)
                 },
                 text = AnnotatedString("Create a Free Account Now."),
@@ -216,14 +234,14 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
         }
         when {
             // ...
-            authenticationError.value -> {
+            authenticationError -> {
                 AlertDialog(
                     onDismissRequest = {},
                     title = {Text("Authentication Failed!")},
                     text = {Text("Something went wrong with authentication. Please verify your login credentials and try again.")},
                     confirmButton = {
                         Button(onClick={
-                            authenticationError.value = false
+                            setAuthenticationError(false)
                         }){
                             Text("OK")
                         }
@@ -234,14 +252,27 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
     }
 }
 
-suspend fun authenticate(appDatabase: AppDatabase, email:String, password:String, navController: NavHostController) {
-    if(appDatabase.AccountDao().validateLogin(email, password)){
+suspend fun authenticate(
+    appDatabase: AppDatabase,
+    email:String,
+    password:String,
+    navController: NavHostController,
+    setLoggedUser: (String) -> Unit,
+    setAuthenticationError: (Boolean) -> Unit,
+    setLoggedUserPictureId: (Int) -> Unit,
+    setLoggedUserFirstName: (String) -> Unit,
+    setLoggedUserLastName: (String) -> Unit) {
+
+    val account = appDatabase.AccountDao().getAccount(email)
+    if(account != null && account.email == email && account.password == password) {
+        setLoggedUser(account.email)
+        setLoggedUserPictureId(account.profilePictureId)
+        setLoggedUserFirstName(account.firstName)
+        setLoggedUserLastName(account.lastName)
         navController.navigate(Home.route)
     }
     else {
-        withContext(Dispatchers.Main) {
-            authenticationError.value = true
-        }
+        setAuthenticationError(true)
     }
 }
 

@@ -1,6 +1,5 @@
 package com.example.littlelemon
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -42,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -50,18 +50,55 @@ import androidx.room.Room
 import com.example.littlelemon.ui.theme.LittleLemonGreen
 import com.example.littlelemon.ui.theme.LittleLemonTheme
 import com.example.littlelemon.ui.theme.karlaFamily
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.get
+import io.ktor.http.ContentType
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
+    private val httpClient = HttpClient(Android) {
+        install(ContentNegotiation) {
+            json(contentType = ContentType("text", "plain"))
+        }
+    }
+
+    private val database by lazy {
+        Room.databaseBuilder(applicationContext, AppDatabase::class.java, "database").build()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             LittleLemonTheme {
-                AppScreen(this)
+                AppScreen(database)
+            }
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (database.MenuItemDao().isEmpty()) {
+                saveMenuToDatabase(fetchMenu())
             }
         }
     }
+
+    private suspend fun fetchMenu(): List<MenuItemNetwork> {
+        val response = httpClient
+            .get("https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/menu.json")
+            .body<MenuNetwork>()
+        return response.menu
+    }
+
+    private fun saveMenuToDatabase(menuItemsNetwork: List<MenuItemNetwork>) {
+        val menuItemsRoom = menuItemsNetwork.map { it.toMenuItemRoom() }
+        database.MenuItemDao().insertAll(*menuItemsRoom.toTypedArray())
+    }
+
     companion object{
         private val profilePictureIds: List<Int> = listOf(
             R.drawable.profile1,
@@ -80,10 +117,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AppScreen(context: Context ?) {
-    val database by lazy {
-        Room.databaseBuilder(context!!, AppDatabase::class.java, "database").build()
-    }
+private fun AppScreen(database: AppDatabase ?) {
 
     val (loggedUser, setLoggedUser) = rememberPreference(stringPreferencesKey("LoggedUser"), "")
     val (loggedUserPictureId, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.blank_profile)
@@ -163,8 +197,8 @@ private fun AppScreen(context: Context ?) {
                             scope.launch {
                                 drawerState.close()
 
-                                deleteAccout(
-                                    database,
+                                deleteAccount(
+                                    database!!,
                                     AccountRoom(
                                         email = loggedUser,
                                         profilePictureId = loggedUserPictureId,
@@ -259,13 +293,13 @@ private fun AppScreen(context: Context ?) {
                     .fillMaxSize()
                     .padding(it)
             ) {
-                MyNavigation(navController = navController, database)
+                MyNavigation(navController = navController, database!!)
             }
         }
     }
 }
 
-suspend fun deleteAccout(appDatabase: AppDatabase, account: AccountRoom) {
+suspend fun deleteAccount(appDatabase: AppDatabase, account: AccountRoom) {
     appDatabase.AccountDao().deleteAccount(account)
 }
 
@@ -273,6 +307,8 @@ suspend fun deleteAccout(appDatabase: AppDatabase, account: AccountRoom) {
 fun MyNavigation(navController: NavHostController, database: AppDatabase) {
     val accounts by database.AccountDao().getAll().observeAsState(emptyList())
     accounts.forEach { Log.d("ReneDebug", it.toString()) }
+    val menuItems by database.MenuItemDao().getAll().observeAsState(emptyList())
+    menuItems.forEach { Log.d("ReneDebug", it.toString()) }
     val startDestination = if (accounts.isEmpty()) Login.route else Login.route
     NavHost(
         navController = navController,
@@ -282,7 +318,7 @@ fun MyNavigation(navController: NavHostController, database: AppDatabase) {
             OnboardingScreen(navController)
         }
         composable(Home.route) {
-            HomeScreen(navController)
+            HomeScreen(database)
         }
         composable(PasswordRecovery.route) {
             PasswordRecoveryScreen(navController)

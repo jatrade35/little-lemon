@@ -22,7 +22,7 @@ data class AccountRoom(
 @Dao
 interface AccountDao {
     @Insert
-    fun insertAll(vararg AccountRoom: AccountRoom)
+    fun insertAll(vararg accountRoom: AccountRoom)
 
     @Query("SELECT * FROM AccountRoom")
     fun getAll(): LiveData<List<AccountRoom>>
@@ -40,7 +40,29 @@ interface AccountDao {
     suspend fun deleteAccount(account: AccountRoom)
 }
 
-@Database(entities = [AccountRoom::class], version = 1)
+@Entity
+data class MenuItemRoom(
+    @PrimaryKey var id: Int,
+    var title: String,
+    var description: String,
+    var price: Int,
+    var imageURL: String,
+    var category: String
+)
+
+@Dao
+interface MenuItemDao {
+    @Insert
+    fun insertAll(vararg menuItem: MenuItemRoom)
+
+    @Query("SELECT * FROM MenuItemRoom")
+    fun getAll(): LiveData<List<MenuItemRoom>>
+    @Query("SELECT (SELECT COUNT(*) FROM MenuItemRoom) == 0")
+    fun isEmpty(): Boolean
+}
+
+@Database(entities = [AccountRoom::class, MenuItemRoom::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun AccountDao(): AccountDao
+    abstract fun MenuItemDao(): MenuItemDao
 }

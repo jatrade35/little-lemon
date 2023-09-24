@@ -1,7 +1,6 @@
 package com.example.littlelemon
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.lifecycleScope
@@ -105,7 +105,8 @@ class MainActivity : ComponentActivity() {
             R.drawable.profile2,
             R.drawable.profile3,
             R.drawable.profile4,
-            R.drawable.profile5)
+            R.drawable.profile5,
+            R.drawable.profile_blank)
 
         fun getRandomProfilePictureId(): Int {
             return (
@@ -120,7 +121,7 @@ class MainActivity : ComponentActivity() {
 private fun AppScreen(database: AppDatabase ?) {
 
     val (loggedUser, setLoggedUser) = rememberPreference(stringPreferencesKey("LoggedUser"), "")
-    val (loggedUserPictureId, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.blank_profile)
+    val (loggedUserPictureId, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.profile_blank)
     val (loggedUserFirstName, setLoggedUserFirstName) = rememberPreference(stringPreferencesKey("LoggedUserFirstName"), "")
     val (loggedUserLastName, setLoggedUserLastName) = rememberPreference(stringPreferencesKey("LoggedUserLastName"), "")
 
@@ -208,7 +209,7 @@ private fun AppScreen(database: AppDatabase ?) {
                                     )
                                 )
                                 setLoggedUser("")
-                                setLoggedUserPictureId(R.drawable.blank_profile)
+                                setLoggedUserPictureId(R.drawable.profile_blank)
                                 setLoggedUserFirstName("")
                                 setLoggedUserLastName("")
 
@@ -236,7 +237,7 @@ private fun AppScreen(database: AppDatabase ?) {
                             scope.launch {
                                 drawerState.close()
                                 setLoggedUser("")
-                                setLoggedUserPictureId(R.drawable.blank_profile)
+                                setLoggedUserPictureId(R.drawable.profile_blank)
                                 setLoggedUserFirstName("")
                                 setLoggedUserLastName("")
 
@@ -305,18 +306,13 @@ suspend fun deleteAccount(appDatabase: AppDatabase, account: AccountRoom) {
 
 @Composable
 fun MyNavigation(navController: NavHostController, database: AppDatabase) {
+    val (_, setOnboarding) = rememberPreference(booleanPreferencesKey("onboarding"), true)
     val accounts by database.AccountDao().getAll().observeAsState(emptyList())
-    accounts.forEach { Log.d("ReneDebug", it.toString()) }
-    val menuItems by database.MenuItemDao().getAll().observeAsState(emptyList())
-    menuItems.forEach { Log.d("ReneDebug", it.toString()) }
-    val startDestination = if (accounts.isEmpty()) Login.route else Login.route
+    setOnboarding(accounts.isEmpty())
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = if(accounts.isEmpty()) Profile.route else  Login.route
     ) {
-        composable(Onboarding.route) {
-            OnboardingScreen(navController)
-        }
         composable(Home.route) {
             HomeScreen(database)
         }

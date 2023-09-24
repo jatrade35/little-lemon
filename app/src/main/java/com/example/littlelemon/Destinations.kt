@@ -4,10 +4,6 @@ interface Destinations {
     val route: String
 }
 
-object Onboarding : Destinations {
-    override val route = "Onboarding"
-}
-
 object Login : Destinations {
     override val route = "Login"
 }

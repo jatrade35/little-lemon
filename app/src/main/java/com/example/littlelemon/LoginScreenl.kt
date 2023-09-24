@@ -54,7 +54,7 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
     val coroutineScope = rememberCoroutineScope()
 
     val (loggedUser, setLoggedUser) = rememberPreference(stringPreferencesKey("LoggedUser"), "")
-    val (_, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.blank_profile)
+    val (_, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.profile_blank)
     val (_, setLoggedUserFistName) = rememberPreference(stringPreferencesKey("LoggedUserFirstName"), "")
     val (_, setLoggedUserLastName) = rememberPreference(stringPreferencesKey("LoggedUserLastName"), "")
 
@@ -166,7 +166,7 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
                 color = Color(0xFF000000)
             ),
             onClick={
-                navController!!.navigate(PasswordRecovery.route)
+                //navController!!.navigate(PasswordRecovery.route)
             },
             text = AnnotatedString("Forgot Password?"),
             modifier = Modifier
@@ -223,7 +223,7 @@ fun LoginScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) 
                     setLoggedUser("")
                     setLoggedUserFistName("")
                     setLoggedUserLastName("")
-                    setLoggedUserPictureId(R.drawable.blank_profile)
+                    setLoggedUserPictureId(R.drawable.profile_blank)
                     navController!!.navigate(Profile.route)
                 },
                 text = AnnotatedString("Create a Free Account Now."),

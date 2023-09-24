@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -60,12 +61,12 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(navController: NavHostController ?, appDatabase: AppDatabase ?) {
     val coroutineScope = rememberCoroutineScope()
     val (loggedUser, setLoggedUser) = rememberPreference(stringPreferencesKey("LoggedUser"), "")
-    val (loggedUserPictureId, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.blank_profile)
+    val (loggedUserPictureId, setLoggedUserPictureId) = rememberPreference(intPreferencesKey("LoggedUserPictureId"), R.drawable.profile_blank)
     val (loggedUserFirstName, setLoggedUserFirstName) = rememberPreference(stringPreferencesKey("LoggedUserFirstName"), "")
     val (loggedUserLastName, setLoggedUserLastName) = rememberPreference(stringPreferencesKey("LoggedUserLastName"), "")
 
     val (email, setEmail) = remember { mutableStateOf("") }
-    val (pictureId, _) = remember { mutableStateOf(R.drawable.blank_profile) }
+    val (pictureId, _) = remember { mutableStateOf(R.drawable.profile_blank) }
     val (firstName, setFirstName) = remember { mutableStateOf("") }
     val (lastName, setLastName) = remember { mutableStateOf("") }
 
@@ -82,6 +83,32 @@ fun ProfileScreen(navController: NavHostController ?, appDatabase: AppDatabase ?
             .background(LittleLemonLightGrey),
         verticalArrangement = Arrangement.Top
     ) {
+        when(loggedUser) {
+            "" -> {
+                Column(
+                    modifier = Modifier
+                        .padding(bottom = 20.dp)
+                        .fillMaxWidth()
+                        .fillMaxHeight(.20f)
+                        .background(LittleLemonGreen),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    Text(
+                        text = "Let's get to know you",
+                        style = TextStyle(
+                            fontFamily = karlaFamily,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+
+                        )
+
+                    )
+                }
+            }
+            else -> {}
+        }
         Text(
             fontFamily = karlaFamily,
             fontSize = 20.sp,
@@ -92,29 +119,35 @@ fun ProfileScreen(navController: NavHostController ?, appDatabase: AppDatabase ?
                 .padding(start = 10.dp, top = 20.dp, end = 10.dp, bottom = 20.dp),
             color = Color(0xFF000000),
         )
-        Image(
-            painter = painterResource(
-                id = if(loggedUser != "") loggedUserPictureId else pictureId),
-            contentDescription = "profile",
-            contentScale = ContentScale.Fit,
+        when(loggedUser) {
+            "" -> {}
+            else -> {
+                Image(
+                    painter = painterResource(
+                        id = if (loggedUser != "") loggedUserPictureId else pictureId
+                    ),
+                    contentDescription = "profile",
+                    contentScale = ContentScale.Fit,
 
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp)
-                .height(150.dp)
-                .width(150.dp)
-        )
-        Text(
-            text = "Change image",
-            style = TextStyle(
-                fontSize = 15.sp
-            ),
-            textAlign = TextAlign.Center,
-            textDecoration = TextDecoration.Underline,
-            modifier = Modifier
-                .fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                        .height(150.dp)
+                        .width(150.dp)
+                )
+                Text(
+                    text = "Change image",
+                    style = TextStyle(
+                        fontSize = 15.sp
+                    ),
+                    textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .fillMaxWidth()
 
-        )
+                )
+            }
+        }
         TextField(
             modifier = Modifier
                 .padding(start = 10.dp, top = 20.dp, end = 10.dp, bottom = 10.dp)
@@ -310,7 +343,7 @@ fun ProfileScreen(navController: NavHostController ?, appDatabase: AppDatabase ?
             onClick = {
                 if(loggedUser != "") {
                     setLoggedUser("")
-                    setLoggedUserPictureId(R.drawable.blank_profile)
+                    setLoggedUserPictureId(R.drawable.profile_blank)
                     setLoggedUserFirstName("")
                     setLoggedUserLastName("")
 
@@ -327,7 +360,7 @@ fun ProfileScreen(navController: NavHostController ?, appDatabase: AppDatabase ?
                             firstName = firstName,
                             lastName = lastName,
                             password = password,
-                            profilePictureId = R.drawable.blank_profile),
+                            profilePictureId = R.drawable.profile_blank),
                         confirmPassword
                     )
                     if(dataEntryError.value == "") {
@@ -365,7 +398,7 @@ fun ProfileScreen(navController: NavHostController ?, appDatabase: AppDatabase ?
             shape = RoundedCornerShape( 8.dp)
         ) {
             Text(
-                text= if(loggedUser != "") "Log Out" else "Create Account"
+                text= if(loggedUser != "") "Log Out" else "Register"
             )
         }
         when(dataEntryError.value) {
